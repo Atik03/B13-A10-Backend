@@ -721,6 +721,45 @@ async function run() {
       }
     });
 
+    // Create Delivery (Buy Book)
+    app.post("/deliveries", async (req, res) => {
+      try {
+        const delivery = req.body;
+
+        // Duplicate Check
+        const existingDelivery = await deliveriesCollection.findOne({
+          bookId: delivery.bookId,
+          userEmail: delivery.userEmail,
+          status: {
+            $in: ["Pending", "Dispatched"],
+          },
+        });
+
+        if (existingDelivery) {
+          return res.status(400).send({
+            success: false,
+            message: "You already purchased this book.",
+          });
+        }
+
+        delivery.status = "Pending";
+        delivery.createdAt = new Date();
+
+        const result = await deliveriesCollection.insertOne(delivery);
+
+        res.send({
+          success: true,
+          message: "Book purchased successfully",
+          result,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
