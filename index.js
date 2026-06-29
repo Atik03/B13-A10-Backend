@@ -781,6 +781,36 @@ async function run() {
       }
     });
 
+    // Update Delivery Status
+    app.patch("/deliveries/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const { status } = req.body;
+
+        const result = await deliveriesCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status,
+            },
+          },
+        );
+
+        res.send({
+          success: true,
+          modifiedCount: result.modifiedCount,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
