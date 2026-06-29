@@ -1089,25 +1089,6 @@ async function run() {
       }
     });
 
-    // Get Reviews by Book
-    app.get("/reviews/:bookId", async (req, res) => {
-      try {
-        const { bookId } = req.params;
-
-        const reviews = await reviewsCollection
-          .find({ bookId })
-          .sort({ createdAt: -1 })
-          .toArray();
-
-        res.send(reviews);
-      } catch (error) {
-        res.status(500).send({
-          success: false,
-          message: error.message,
-        });
-      }
-    });
-
     // My Reviews
     app.get("/user/reviews/:email", async (req, res) => {
       try {
