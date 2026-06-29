@@ -1049,6 +1049,305 @@ async function run() {
       }
     });
 
+    // Add Review
+    app.post("/reviews", async (req, res) => {
+      try {
+        const review = req.body;
+
+        review.createdAt = new Date();
+
+        const result = await reviewsCollection.insertOne(review);
+
+        res.send({
+          success: true,
+          insertedId: result.insertedId,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Get Reviews by Book
+    app.get("/reviews/:bookId", async (req, res) => {
+      try {
+        const { bookId } = req.params;
+
+        const reviews = await reviewsCollection
+          .find({ bookId })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(reviews);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Get Reviews by Book
+    app.get("/reviews/:bookId", async (req, res) => {
+      try {
+        const { bookId } = req.params;
+
+        const reviews = await reviewsCollection
+          .find({ bookId })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(reviews);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // My Reviews
+    app.get("/user/reviews/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+
+        const reviews = await reviewsCollection
+          .find({
+            userEmail: email,
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(reviews);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Update Review
+    app.patch("/reviews/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        const { rating, comment } = req.body;
+
+        const result = await reviewsCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              rating,
+              comment,
+            },
+          },
+        );
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Delete Review
+    app.delete("/reviews/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        const result = await reviewsCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // User Dashboard Overview
+    app.get("/user/dashboard/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+
+        const deliveries = await deliveriesCollection
+          .find({
+            userEmail: email,
+          })
+          .toArray();
+
+        const totalBooksRead = deliveries.filter(
+          (item) => item.status === "Delivered",
+        ).length;
+
+        const pendingDeliveries = deliveries.filter(
+          (item) => item.status === "Pending",
+        ).length;
+
+        const totalSpent = deliveries
+          .filter((item) => item.status === "Delivered")
+          .reduce((sum, item) => sum + Number(item.deliveryFee), 0);
+
+        res.send({
+          totalBooksRead,
+          pendingDeliveries,
+          totalSpent,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // User Delivery History
+    app.get("/user/deliveries/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+
+        const deliveries = await deliveriesCollection
+          .find({
+            userEmail: email,
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .toArray();
+
+        res.send(deliveries);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // My Reading List
+
+    app.get("/user/reading-list/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+
+        const books = await deliveriesCollection
+          .find({
+            userEmail: email,
+            status: "Delivered",
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .toArray();
+
+        res.send(books);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    app.get("/user/reviews/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+
+        const reviews = await reviewsCollection
+          .find({ userEmail: email })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(reviews);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Featured Books (Home)
+    app.get("/featured-books", async (req, res) => {
+      try {
+        const books = await booksCollection
+          .find({
+            status: "Published",
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .limit(3)
+          .toArray();
+
+        res.send(books);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    app.get("/top-librarians", async (req, res) => {
+      try {
+        const result = await booksCollection
+          .aggregate([
+            {
+              $group: {
+                _id: "$librarianEmail",
+                totalBooks: { $sum: 1 },
+              },
+            },
+            {
+              $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "email",
+                as: "user",
+              },
+            },
+            {
+              $unwind: "$user",
+            },
+            {
+              $project: {
+                _id: 0,
+                email: "$_id",
+                totalBooks: 1,
+                name: "$user.name",
+                image: "$user.image",
+                role: "$user.role",
+              },
+            },
+            {
+              $sort: { totalBooks: -1 },
+            },
+            {
+              $limit: 3,
+            },
+          ])
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
