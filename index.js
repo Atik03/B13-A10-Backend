@@ -648,6 +648,22 @@ async function run() {
       }
     });
 
+    // categories-books
+    app.get("/categories", async (req, res) => {
+      try {
+        const result = await booksCollection.distinct("category", {
+          status: "Published",
+        });
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
