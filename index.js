@@ -811,6 +811,244 @@ async function run() {
       }
     });
 
+    // Admin Dashboard Stats
+    app.get("/admin/dashboard-stats", async (req, res) => {
+      try {
+        const totalUsers = await usersCollection.countDocuments();
+
+        const totalLibrarians = await usersCollection.countDocuments({
+          role: "librarian",
+        });
+
+        const totalBooks = await booksCollection.countDocuments();
+
+        const pendingBooks = await booksCollection.countDocuments({
+          status: "Pending",
+        });
+
+        const publishedBooks = await booksCollection.countDocuments({
+          status: "Published",
+        });
+
+        const rejectedBooks = await booksCollection.countDocuments({
+          status: "Rejected",
+        });
+
+        res.send({
+          totalUsers,
+          totalLibrarians,
+          totalBooks,
+          pendingBooks,
+          publishedBooks,
+          rejectedBooks,
+        });
+      } catch (error) {
+        res.status(500).send({
+          message: error.message,
+        });
+      }
+    });
+
+    // Admin Dashboard Overview
+    app.get("/admin/dashboard", async (req, res) => {
+      try {
+        const totalUsers = await usersCollection.countDocuments();
+
+        const totalLibrarians = await usersCollection.countDocuments({
+          role: "librarian",
+        });
+
+        const totalBooks = await booksCollection.countDocuments();
+
+        const pendingBooks = await booksCollection.countDocuments({
+          status: "Pending",
+        });
+
+        const publishedBooks = await booksCollection.countDocuments({
+          status: "Published",
+        });
+
+        const rejectedBooks = await booksCollection.countDocuments({
+          status: "Rejected",
+        });
+
+        res.send({
+          totalUsers,
+          totalLibrarians,
+          totalBooks,
+          pendingBooks,
+          publishedBooks,
+          rejectedBooks,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    //admin/pending-books
+    app.get("/admin/pending-books", async (req, res) => {
+      try {
+        const result = await booksCollection
+          .find({
+            status: "Pending",
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    app.patch("/admin/books/:id/approve", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await booksCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "Published",
+            },
+          },
+        );
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    app.patch("/admin/books/:id/reject", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await booksCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "Rejected",
+            },
+          },
+        );
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Get All Books (Admin)
+
+    app.get("/admin/books", async (req, res) => {
+      try {
+        const books = await booksCollection
+          .find({})
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(books);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Unpublish Book
+
+    app.patch("/admin/books/:id/unpublish", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await booksCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              status: "Pending",
+            },
+          },
+        );
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Delete Book
+
+    app.delete("/admin/books/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const result = await booksCollection.deleteOne({
+          _id: new ObjectId(id),
+        });
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
+    // Get All Transactions (Admin)
+    app.get("/admin/transactions", async (req, res) => {
+      try {
+        const page = Number(req.query.page) || 1;
+        const limit = Number(req.query.limit) || 10;
+
+        const skip = (page - 1) * limit;
+
+        const transactions = await deliveriesCollection
+          .find({})
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray();
+
+        const total = await deliveriesCollection.countDocuments();
+
+        res.send({
+          transactions,
+          total,
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
