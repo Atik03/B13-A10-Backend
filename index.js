@@ -760,6 +760,27 @@ async function run() {
       }
     });
 
+    // Get Librarian Deliveries
+    app.get("/deliveries/librarian/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        const result = await deliveriesCollection
+          .find({
+            librarianEmail: email,
+          })
+          .sort({ createdAt: -1 })
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
