@@ -683,6 +683,44 @@ async function run() {
       }
     });
 
+    // book-stats
+    app.get("/book-stats/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        const total = await booksCollection.countDocuments({
+          ownerEmail: email,
+        });
+
+        const published = await booksCollection.countDocuments({
+          ownerEmail: email,
+          status: "Published",
+        });
+
+        const pending = await booksCollection.countDocuments({
+          ownerEmail: email,
+          status: "Pending Approval",
+        });
+
+        const unpublished = await booksCollection.countDocuments({
+          ownerEmail: email,
+          status: "Unpublished",
+        });
+
+        res.send({
+          total,
+          published,
+          pending,
+          unpublished,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
