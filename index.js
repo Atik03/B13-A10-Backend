@@ -626,6 +626,28 @@ async function run() {
       }
     });
 
+    // featured-books
+    app.get("/featured-books", async (req, res) => {
+      try {
+        const result = await booksCollection
+          .find({
+            status: "Published",
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .limit(6)
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
