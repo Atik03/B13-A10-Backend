@@ -605,6 +605,27 @@ async function run() {
       }
     });
 
+    // Pending Books
+    app.get("/pending-books", async (req, res) => {
+      try {
+        const result = await booksCollection
+          .find({
+            status: "Pending Approval",
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
