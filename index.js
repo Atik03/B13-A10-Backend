@@ -552,6 +552,36 @@ async function run() {
       }
     });
 
+    // Update Availability
+    app.patch("/books/availability/:id", async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        const { availability } = req.body;
+
+        const result = await booksCollection.updateOne(
+          {
+            _id: new ObjectId(id),
+          },
+          {
+            $set: {
+              availability,
+            },
+          },
+        );
+
+        res.send({
+          success: true,
+          result,
+        });
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
