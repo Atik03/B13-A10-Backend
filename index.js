@@ -582,6 +582,29 @@ async function run() {
       }
     });
 
+    // Librarian Books
+    app.get("/my-books/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+
+        const result = await booksCollection
+          .find({
+            ownerEmail: email,
+          })
+          .sort({
+            createdAt: -1,
+          })
+          .toArray();
+
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({
+          success: false,
+          message: error.message,
+        });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
